@@ -1,2 +1,87 @@
-# rd-net
-Inference-time drift experiment demonstrating reduced repetition collapse in frozen LLMs.
+# RD-NET: Inference-Time Drift Reduces Collapse in Frozen LLMs
+
+This repo contains a minimal reproducible experiment showing that adding a small drifted fast-weight memory to a **frozen** Llama-3.1-8B model reduces repetition collapse during long-form text generation.
+
+No training.  
+No LoRA.  
+No fine-tuning.  
+Weights stay frozen.
+
+The only thing changing is a small Gaussian drift term applied to an untrained fast-weight memory at inference time.
+
+---
+
+## What the demo does
+
+- Loads `meta-llama/Meta-Llama-3.1-8B` from Hugging Face in eval mode  
+- Attaches a random fast-weight memory in hidden space (keys/values are fixed, untrained)  
+- At each generation step:
+  - Reads the last hidden state
+  - Computes a memory read with small Gaussian drift on the keys
+  - Projects this into vocab space and adds it to the logits
+- Compares long-form sampling **with** and **without** this drift  
+- Logs a simple char-level rep-4 score over the last 50k characters
+
+It is a **sampling experiment**, not a training method.
+
+---
+
+## Files
+
+- `rd_demo_final.py`  
+  Minimal, self-contained script that:
+  - runs vanilla vs RD-Net generation
+  - writes `vanilla_log.txt` and `rdnet_log.txt`
+  - prints:  
+    `k tokens | rep-4 = <score> | drift = <value>`
+
+- `rd_wrapper.py`  
+  Lightweight wrapper to use the same drift mechanism as a plug-in around any Hugging Face causal LM.
+
+---
+
+## Running the experiment
+
+You need Python, `torch`, and `transformers`.
+
+```bash
+pip install torch transformers
+python rd_demo_final.pyThis will:
+	•	Run a 20k-token vanilla generation (no drift)
+	•	Run a 150k-token RD-Net generation (with drift)
+	•	Produce:
+	•	vanilla_log.txt
+	•	rdnet_log.txt
+
+Each log line looks like:10k tokens | rep-4 = 0.4321 | drift = 0.0720Typical behavior I’ve observed:
+	•	Vanilla: rep-4 climbs quickly as the model falls into loops / copy-paste patterns
+	•	RD-Net: rep-4 stays lower for much longer with the same base model, same prompt, same seed
+
+If your results disagree, please open an issue.
+
+⸻
+
+What this is NOT
+	•	Not a claim of improved reasoning or accuracy
+	•	Not reinforcement learning
+	•	Not fine-tuning or weight updates
+	•	Not a benchmark win
+
+This is a single, specific empirical observation:
+
+Inference-time drift via a small fast-weight memory changes long-form collapse behavior in a frozen model.
+
+⸻
+
+Status / TODO
+	•	Minimal reproducible script on Llama-3.1-8B
+	•	Test on other model families (Mistral, Qwen, etc.)
+	•	Token-level metrics and entropy curves
+	•	Ablations over drift schedule / memory size
+	•	Proper write-up with plots
+
+⸻
+
+License
+
+MIT. Use it, break it, improve it. Attribution appreciated.
