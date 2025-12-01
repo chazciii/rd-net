@@ -1,76 +1,73 @@
-RD-Net: Drift-Injected Memory for Frozen LLMs
+# RD-Net: Drift-Stabilized Inference for Frozen Large Language Models
 
-[![arXiv](https://img.shields.io/badge/status-preprint-blue)](#)
+[![Status](https://img.shields.io/badge/state-experimental-orange)](#)
 [![Replications Welcome](https://img.shields.io/badge/replication-open-green)](#)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
 
-A small inference-time modification that delays repetition collapse in large language models without fine-tuning, LoRA, or modifying weights.
+---
 
-This repo contains a minimal reproducible script tested on Llama-3.1-8B that shows a repeatable effect:
+## Overview
 
-Vanilla model collapses after ~8k–12k tokens.
-With drift-injected fast-weight memory, coherent generation continues far longer with lower rep-4 repetition.
-All weights remain frozen.
+This repository contains a minimal inference-time modification that reduces or delays repetition collapse in long-form text generation on frozen large language models.
 
-This is not presented as a finished method or breakthrough — just a reproducible behavior worth investigation.
+The method is simple:  
+A small drift term is injected into an auxiliary fast-weight memory module during inference. No training, fine-tuning, KV cache manipulation, LoRA, or retraining is required. The underlying model remains frozen.
 
+Preliminary results show that this drift mechanism maintains lower repetition entropy substantially longer than baseline generation under identical settings.
+
+This is early research and requires broader replication.
 
 ---
 
-Abstract
+## Abstract
 
-This repository presents a minimal inference-time modification for frozen LLMs that reduces or delays repetition collapse during long-form generation. By injecting a small scheduled Gaussian drift term into an untrained fast-weight memory module, repetition entropy remains lower than baseline across runs exceeding 150k tokens. No training, LoRA, KV-cache manipulation, or fine-tuning is required.
+Large language models often enter a repetitive attractor state during extended free-running generation, especially without conditioning or resets. This behavior emerges even with large context windows and sampling strategies like temperature, nucleus sampling, or top-k truncation.
 
-This is an early empirical result. Further validation, ablations, and replication across model families (Qwen, Mistral, Phi-3, GPTQ, GGUF, etc.) are requested.
+We explore a lightweight inference-time perturbation method using a scheduled Gaussian drift applied to an untrained fast-weight memory module. Initial experiments on Llama-3.1-8B show that this approach delays repetition collapse over long generation sequences, preserving novelty beyond 100k tokens.
+
+These findings are preliminary and require independent verification across model families, inference stacks, and settings.
 
 ---
-⸻
 
-Why Its Worth Exploring
+## Why This Might Matter
 
-Long-form generation typically causes frozen LLMs to enter a repetition loop such as:
+- The effect occurs **without touching model weights**.  
+- The method is **architecture-agnostic** (tested only on Llama-3.1 so far).  
+- It may offer a lightweight mitigation for collapse modes in:
+  - agent loops  
+  - long-context narrative models  
+  - streaming or infinite-generation systems  
 
-the king replied the king replied the king replied...
+Whether this scales or generalizes remains an open question.
 
-This experiment shows that lightly perturbing an auxiliary memory layer during inference:
-	•	delays this collapse,
-	•	increases token-level novelty,
-	•	and maintains useful structure further into long sequences.
+---
 
-No training, no gradient updates, no KV editing — purely inference-side behavior.
+## Installation
 
-⸻
-
-How to Run
-	1.	Clone the repo:
-
+```bash
 git clone https://github.com/chazciii/rd-net
 cd rd-net
+pip install torch transformers accelerate tqdm
+```
 
-	2.	Install dependencies:
+---
 
-pip install torch transformers tqdm accelerate
+## Run the Experiment
 
-	3.	Run the demo:
-
+```bash
 python rd_demo_final.py
-
-
-⸻
-
-Expected Output
+```
 
 The script generates two log files:
 
-vanilla_log.txt
-rdnet_log.txt
+- `vanilla_log.txt`
+- `rdnet_log.txt`
 
-The script generates two log files:
+Both use identical sampling settings and context constraints. The only difference is whether drift is applied.
 
-vanilla_log.txt
-rdnet_log.txt
+---
 
-### Example Output
+## Example Output
 
 <details>
 <summary>Click to expand logs</summary>
@@ -79,10 +76,12 @@ rdnet_log.txt
 Example Run (RTX 4090 • CUDA 12.1 • Llama-3.1-8B)
 
 Vanilla (no drift applied):
-10k tokens | rep-4 = 0.7421 | drift = 0.0000
-20k tokens | rep-4 = 0.8923 | drift = 0.0000
+
+10k tokens  | rep-4 = 0.7421 | drift = 0.0000
+20k tokens  | rep-4 = 0.8923 | drift = 0.0000
 
 RD-Net (drift applied):
+
 10k tokens  | rep-4 = 0.2814 | drift = 0.1123
 20k tokens  | rep-4 = 0.2931 | drift = 0.0987
 30k tokens  | rep-4 = 0.3012 | drift = 0.0876
@@ -99,69 +98,53 @@ RD-Net (drift applied):
 140k tokens | rep-4 = 0.3391 | drift = 0.0437
 150k tokens | rep-4 = 0.3396 | drift = 0.0422
 ```
+
 </details>
-
-
-Summary:
-
-- The standard frozen model begins collapsing around ~20k tokens (rep-4 ≈ 0.89).
-- With RD-Net drift, repetition stays low and stable (~0.28→0.34) past 150k tokens.
-- No fine-tuning, training, LoRA, or KV-cache edits.
-
-Only modification: a small Gaussian drift term applied to a frozen fast-weight memory during inference.
-This shows how repetition grows in the standard model versus the drift-injected version.
-
-⸻
-
-What’s Going On?
-
-The method injects small, scheduled Gaussian noise into an untrained fast-weight memory module.
-The drift slowly decays over time.
-
-Working hypothesis:
-	•	The perturbation prevents the model from locking into a predictable attractor state.
-	•	It acts as a weak form of entropy or “novelty stimulation.”
-	•	Result: collapse is delayed.
-
-More validation is needed.
-
-⸻
-
-Contributing / Replication
-
-If you run experiments on different models (Qwen, Mistral, Phi-3, GPTQ, GGUF, etc.), please share logs or plots.
-
-Even one-line confirmation or contradiction is useful.
-
-⸻
-
-Status
-	•	Code reproducible
-	•	Results consistent on Llama-3.1-8B
-	•	Research stage: early validation
-
-A paper and full benchmark suite will follow once replication feedback comes in.
-
-⸻
-
-License
-
-MIT — open for experimentation.
-
-
-Contact
-
-Open discussion via GitHub Issues.
 
 ---
 
-### 📑 Citation
+## Summary of Results
 
-If you use or reference this work, please cite:
+| Condition                    | First Collapse Point | Approx. Final rep-4 |
+|-----------------------------|----------------------|---------------------|
+| Vanilla (frozen model)      | ~20–24k tokens       | ~0.89               |
+| RD-Net Drift (frozen model) | >150k tokens         | ~0.34 (stable)      |
+
+These values vary by run and hardware, and should not be treated as benchmarks.
+
+---
+
+## Limitations / Caveats
+
+- Results currently rely on a **single hardware setup** and **single model family**.  
+- No evaluation yet on coherence, semantics, or downstream task performance.  
+- Effect may depend on sampling configuration.  
+- Drift parameters are heuristic and unoptimized.  
+- Unknown behavior on quantized models (GPTQ/GGUF).
+
+---
+
+## Replication Requests
+
+If you test this on:
+
+- Qwen  
+- Mistral  
+- Falcon  
+- Phi-3  
+- GGUF / GPTQ  
+- CPU-only inference  
+- Agent frameworks  
+
+…please submit logs or open an issue. Positive, negative, or neutral results are all useful.
+
+---
+
+## Citation
 
 ```bibtex
 @misc{cook2025rdnet,
-  title={RD-NET: Drift-Stabilized Inference for Frozen LLMs},
+  title={RD-Net: Drift-Stabilized Inference for Frozen LLMs},
   author={Cook, Chaz},
   year={2025},
   url={https://github.com/chazciii/rd-net},
@@ -170,3 +153,9 @@ If you use or reference this work, please cite:
 ```
 
 ---
+
+## License
+
+MIT License.
+
+Replication and pull requests welcome.
