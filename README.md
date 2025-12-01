@@ -95,7 +95,6 @@ License
 
 MIT — open for experimentation.
 
-⸻
 
 Contact
 
