@@ -112,6 +112,15 @@ RD-Net (drift applied):
 
 These values vary by run and hardware, and should not be treated as benchmarks.
 
+
+### Replication Matrix
+
+| Model | Vanilla Collapse (rep-4 threshold > 0.85) | Drift Run Length | Final rep-4 |
+|-------|------------------------------------------|------------------|-------------|
+| Llama-3.1-8B | ~20–24k tokens | >150k tokens | ~0.3396 |
+| Mistral-7B (initial replication) | ~18–22k tokens | ≥150k tokens | ~0.3288 |
+
+> More model families welcome (Qwen, Mistral-MoE, Falcon, Phi-3, Mixtral, GGUF/GPTQ variants).
 ---
 
 ## Limitations / Caveats
@@ -129,7 +138,6 @@ These values vary by run and hardware, and should not be treated as benchmarks.
 If you test this on:
 
 - Qwen  
-- Mistral  
 - Falcon  
 - Phi-3  
 - GGUF / GPTQ  
