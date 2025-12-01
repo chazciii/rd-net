@@ -1,5 +1,9 @@
 RD-Net: Drift-Injected Memory for Frozen LLMs
 
+[![arXiv](https://img.shields.io/badge/status-preprint-blue)](#)
+[![Replications Welcome](https://img.shields.io/badge/replication-open-green)](#)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+
 A small inference-time modification that delays repetition collapse in large language models without fine-tuning, LoRA, or modifying weights.
 
 This repo contains a minimal reproducible script tested on Llama-3.1-8B that shows a repeatable effect:
@@ -10,6 +14,16 @@ All weights remain frozen.
 
 This is not presented as a finished method or breakthrough — just a reproducible behavior worth investigation.
 
+
+---
+
+Abstract
+
+This repository presents a minimal inference-time modification for frozen LLMs that reduces or delays repetition collapse during long-form generation. By injecting a small scheduled Gaussian drift term into an untrained fast-weight memory module, repetition entropy remains lower than baseline across runs exceeding 150k tokens. No training, LoRA, KV-cache manipulation, or fine-tuning is required.
+
+This is an early empirical result. Further validation, ablations, and replication across model families (Qwen, Mistral, Phi-3, GPTQ, GGUF, etc.) are requested.
+
+---
 ⸻
 
 Why Its Worth Exploring
@@ -139,3 +153,20 @@ Contact
 
 Open discussion via GitHub Issues.
 
+---
+
+### 📑 Citation
+
+If you use or reference this work, please cite:
+
+```bibtex
+@misc{cook2025rdnet,
+  title={RD-NET: Drift-Stabilized Inference for Frozen LLMs},
+  author={Cook, Chaz},
+  year={2025},
+  url={https://github.com/chazciii/rd-net},
+  note={Preprint, work in progress}
+}
+```
+
+---
